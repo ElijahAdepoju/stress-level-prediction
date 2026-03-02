@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+
+{% block title %}Uploads - Stress Level Predictor{% endblock %}
+
+{% block content %}
+    <div class="container">
+        <h1 align="center">Uploads</h1>
+        <p align="center" class="subtitle">Manage your records and data imports</p>
+
+        {% if message %}
+            <div class="alert alert-{{ message_type or 'info' }}">{{ message }}</div>
+        {% endif %}
+
+        <div class="uploads-actions">
+            <div class="form-section uploads-card">
+                <h3>Import Data</h3>
+                <form method="POST" action="{{ url_for('uploads_import') }}" enctype="multipart/form-data">
+                    <div class="form-group import-row">
+                        <button type="submit" class="btn btn-primary">Import CSV</button>
+                        <input class="form-control" type="file" id="data_file" name="data_file" accept=".csv,.xlsx,.xls" required>
+                    </div>
+                </form>
+            </div>
+
+            <div class="form-section uploads-card">
+                <h3>Export Data</h3>
+                <div class="export-buttons">
+                    <a class="btn btn-secondary btn-small" href="{{ url_for('uploads_export_csv') }}">Export CSV</a>
+                    <a class="btn btn-secondary btn-small" href="{{ url_for('uploads_export_pdf') }}">Export PDF</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="recent-inputs-section">
+            <h3>Records</h3>
+            {% if records %}
+            <div class="table-responsive">
+                <table class="dashboard-table">
+                    <thead>
+                        <tr>
+                            <th>Date & Time</th>
+                            <th>Anxiety</th>
+                            <th>Mental Health</th>
+                            <th>Depression</th>
+                            <th>Headache</th>
+                            <th>Sleep</th>
+                            <th>Breathing</th>
+                            <th>Living</th>
+                            <th>Academic</th>
+                            <th>Study</th>
+                            <th>Career</th>
+                            <th>Extra</th>
+                            <th>Stress</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for record in records %}
+                        <tr>
+                            <td>{{ record.timestamp.strftime('%Y-%m-%d %H:%M') }}</td>
+                            <td>{{ record.anxiety_level }}</td>
+                            <td>{{ record.mental_health_history }}</td>
+                            <td>{{ record.depression }}</td>
+                            <td>{{ record.headache }}</td>
+                            <td>{{ record.sleep_quality }}</td>
+                            <td>{{ record.breathing_problem }}</td>
+                            <td>{{ record.living_conditions }}</td>
+                            <td>{{ record.academic_performance }}</td>
+                            <td>{{ record.study_load }}</td>
+                            <td>{{ record.future_career_concerns }}</td>
+                            <td>{{ record.extracurricular_activities }}</td>
+                            <td>{{ record.stress_level if record.stress_level is not none else 'N/A' }}</td>
+                            <td class="actions-cell">
+                                <a class="icon-btn" href="{{ url_for('uploads_edit', record_id=record.id) }}" title="Edit">
+                                    <i class="fas fa-pen"></i>
+                                </a>
+                                <form method="POST" action="{{ url_for('uploads_delete', record_id=record.id) }}" class="inline-form">
+                                    <button class="icon-btn danger" type="submit" title="Delete">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% if pagination and pagination.pages > 1 %}
+            <div class="pagination">
+                <div class="pagination-info">
+                    Page {{ pagination.page }} of {{ pagination.pages }}
+                </div>
+                <div class="pagination-links">
+                    {% if pagination.has_prev %}
+                        <a class="page-link" href="{{ url_for('uploads', page=1) }}">First</a>
+                        <a class="page-link" href="{{ url_for('uploads', page=pagination.prev_num) }}">Prev</a>
+                    {% else %}
+                        <span class="page-link disabled">First</span>
+                        <span class="page-link disabled">Prev</span>
+                    {% endif %}
+
+                    {% for p in range(1, pagination.pages + 1) %}
+                        {% if p == pagination.page %}
+                            <span class="page-link active">{{ p }}</span>
+                        {% else %}
+                            <a class="page-link" href="{{ url_for('uploads', page=p) }}">{{ p }}</a>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if pagination.has_next %}
+                        <a class="page-link" href="{{ url_for('uploads', page=pagination.next_num) }}">Next</a>
+                        <a class="page-link" href="{{ url_for('uploads', page=pagination.pages) }}">Last</a>
+                    {% else %}
+                        <span class="page-link disabled">Next</span>
+                        <span class="page-link disabled">Last</span>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+            {% else %}
+                <div class="alert alert-info">No records available yet.</div>
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}

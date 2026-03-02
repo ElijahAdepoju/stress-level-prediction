@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Stress Level Predictor{% endblock %}</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <nav class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h2>DASHBOARD</h2>
+            <button class="toggle-btn" id="toggleBtn" onclick="toggleSidebar()">
+                <i class="fas fa-bars"></i>
+            </button>
+        </div>
+        <ul class="sidebar-nav">
+            <li><a href="{{ url_for('dashboard') }}" title="Dashboard"><i class="fas fa-tachometer-alt"></i><span>Dashboard</span></a></li>
+            <li><a href="{{ url_for('predict') }}" title="Predict"><i class="fas fa-chart-line"></i><span>Predict</span></a></li>
+            <li><a href="{{ url_for('uploads') }}" title="Uploads"><i class="fas fa-upload"></i><span>Uploads</span></a></li>
+            <li><a href="{{ url_for('reports') }}" title="Reports"><i class="fas fa-file-alt"></i><span>Reports</span></a></li>
+            <li><a href="{{ url_for('model') }}" title="Model"><i class="fas fa-brain"></i><span>Model</span></a></li>
+            <li><a href="{{ url_for('settings') }}" title="Settings"><i class="fas fa-cog"></i><span>Settings</span></a></li>
+            <li><a href="{{ url_for('logout') }}" title="Logout"><i class="fas fa-sign-out-alt"></i><span>Logout</span></a></li>
+        </ul>
+    </nav>
+    <div class="main-content">
+        {% block content %}{% endblock %}
+    </div>
+    <script>
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('collapsed');
+        }
+    </script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

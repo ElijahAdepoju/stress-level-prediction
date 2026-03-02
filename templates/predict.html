@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+
+{% block title %}Stress Level Prediction{% endblock %}
+
+{% block content %}
+    <div class="container">
+        <h1 align="center">Stress Level Assessment</h1>
+        <p align="center" class="subtitle">Fill in your details to get a stress level prediction</p>
+
+        <form action="/predict" method="post" onsubmit="return validateForm()" class="assessment-form">
+            <div class="form-section">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="anxiety_level" class="form-label">Anxiety Level (0-20)</label>
+                        <input type="number" class="form-control" id="anxiety_level" name="anxiety_level" min="0" max="20" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="mental_health_history" class="form-label">Mental Health History (0-5)</label>
+                        <input type="number" class="form-control" id="mental_health_history" name="mental_health_history" min="0" max="5" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="depression" class="form-label">Depression (0-25)</label>
+                        <input type="number" class="form-control" id="depression" name="depression" min="0" max="25" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="headache" class="form-label">Headache Frequency (0-7)</label>
+                        <input type="number" class="form-control" id="headache" name="headache" min="0" max="7" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="sleep_quality" class="form-label">Sleep Quality (0-7)</label>
+                        <input type="number" class="form-control" id="sleep_quality" name="sleep_quality" min="0" max="7" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="breathing_problem" class="form-label">Breathing Problems (0-5)</label>
+                        <input type="number" class="form-control" id="breathing_problem" name="breathing_problem" min="0" max="5" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="living_conditions" class="form-label">Living Conditions (0-5)</label>
+                        <input type="number" class="form-control" id="living_conditions" name="living_conditions" min="0" max="5" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="academic_performance" class="form-label">Academic Performance (0-5)</label>
+                        <input type="number" class="form-control" id="academic_performance" name="academic_performance" min="0" max="5" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="study_load" class="form-label">Study/Work Load (0-5)</label>
+                        <input type="number" class="form-control" id="study_load" name="study_load" min="0" max="5" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="future_career_concerns" class="form-label">Future Career Concerns (0-5)</label>
+                        <input type="number" class="form-control" id="future_career_concerns" name="future_career_concerns" min="0" max="5" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="extracurricular_activities" class="form-label">Extracurricular Activities (0-5)</label>
+                        <input type="number" class="form-control" id="extracurricular_activities" name="extracurricular_activities" min="0" max="5" required>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary">Get Stress Prediction</button>
+                <a class="btn btn-secondary" href="{{ url_for('dashboard') }}">Cancel</a>
+            </div>
+        </form>
+    </div>
+
+{% endblock %}
+
+{% block extra_js %}
+    <script>
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('collapsed');
+            localStorage.setItem('sidebarCollapsed', sidebar.classList.contains('collapsed'));
+        }
+
+        window.addEventListener('DOMContentLoaded', function() {
+            const sidebar = document.getElementById('sidebar');
+            if (localStorage.getItem('sidebarCollapsed') === 'true') {
+                sidebar.classList.add('collapsed');
+            }
+        });
+
+        function validateForm() {
+            var inputs = document.getElementsByTagName('input');
+            for (var i = 0; i < inputs.length; i++) {
+                var input = inputs[i];
+                if (input.type === 'number') {
+                    if (!input.value || isNaN(input.value)) {
+                        alert('Please enter a valid number for all fields.');
+                        return false;
+                    }
+                }
+            }
+            return true;
+        }
+    </script>
+{% endblock %}

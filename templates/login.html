@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Stress Level Prediction</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap">
+</head>
+<body>
+    <div class="auth-container-split">
+        <div class="auth-image-section">
+            <img src="{{ url_for('static', filename='stressed-man.jpg') }}" alt="Stressed person" class="auth-image">
+            
+        </div>
+
+        <div class="auth-form-section">
+            <div class="auth-form-content">
+                <h1 style="color: #1e3a5f;">Stress Level Prediction</h1>
+                <p class="subtitle">Sign in to your account</p>
+
+                {% if error %}
+                    <div class="alert alert-danger">{{ error }}</div>
+                {% endif %}
+
+                <form action="/login" method="post" class="auth-form">
+                    <div class="form-group">
+                        <label for="username" class="form-label">Username</label>
+                        <input type="text" class="form-control" id="username" name="username" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="password" class="form-label">Password</label>
+                        <input type="password" class="form-control" id="password" name="password" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-block">Sign In</button>
+                </form>
+
+                <div class="auth-footer">
+                    <p>Don't have an account? <a href="{{ url_for('register') }}" class="auth-link">Create one here</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

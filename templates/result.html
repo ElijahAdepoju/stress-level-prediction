@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block title %}Prediction Result{% endblock %}
+
+{% block content %}
+    <div class="container result-container">
+        <h1 align="center">Prediction Result</h1>
+        <p align="center" class="subtitle">Result from {{ selected_model }}</p>
+
+        <div class="model-comparison">
+            <div class="model-card tree-card">
+                <h3>Stress Level</h3>
+                {% set stress_text = (selected_stress|string)|lower %}
+                {% if 'low' in stress_text %}
+                    {% set stress_class = 'stress-level-low' %}
+                {% elif 'medium' in stress_text %}
+                    {% set stress_class = 'stress-level-medium' %}
+                {% else %}
+                    {% set stress_class = 'stress-level-high' %}
+                {% endif %}
+                <div class="stress-level {{ stress_class }}">{{ selected_stress }}</div>
+                <p class="model-info">{{ recommendation }}</p>
+            </div>
+        </div>
+
+        <div class="center-button">
+            <button onclick="goBack()" class="btn btn-secondary">New Assessment</button>
+        </div>
+    </div>
+
+{% endblock %}
+
+{% block extra_js %}
+    <script>
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('collapsed');
+            localStorage.setItem('sidebarCollapsed', sidebar.classList.contains('collapsed'));
+        }
+
+        function goBack() {
+            window.location.href = '{{ url_for("predict") }}';
+        }
+
+        window.addEventListener('DOMContentLoaded', function() {
+            const sidebar = document.getElementById('sidebar');
+            if (localStorage.getItem('sidebarCollapsed') === 'true') {
+                sidebar.classList.add('collapsed');
+            }
+        });
+    </script>
+{% endblock %}

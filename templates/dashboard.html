@@ -1,0 +1,260 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Stress Level Predictor{% endblock %}
+
+{% block extra_css %}
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+{% endblock %}
+
+{% block content %}
+    <div class="container">
+        <h1 align="center">Dashboard</h1>
+        <p align="center" class="subtitle">Welcome, {{ username }}!</p>
+
+        <!-- KPIs Section -->
+        <div class="kpi-grid">
+            <div class="kpi-card">
+                <div class="kpi-label">Average Stress Level</div>
+                <div class="kpi-value">{{ "%.1f"|format(stats.avg_stress_level if stats.avg_stress_level else 0) }}</div>
+                <div class="kpi-unit">out of 4</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">Low Stress</div>
+                <div class="kpi-value">{{ stats.low_stress_count }}</div>
+                <div class="kpi-unit">assessments</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">Medium Stress</div>
+                <div class="kpi-value">{{ stats.medium_stress_count }}</div>
+                <div class="kpi-unit">assessments</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">High Stress</div>
+                <div class="kpi-value">{{ stats.high_stress_count }}</div>
+                <div class="kpi-unit">assessments</div>
+            </div>
+        </div>
+
+        <!-- Charts Section -->
+        <div class="charts-section">
+            <div class="chart-container trend-chart-container">
+                <h3>Stress Level Over Time</h3>
+                <canvas id="trendChart"></canvas>
+            </div>
+            <div class="chart-container pie-chart-container">
+                <h3>Stress Distribution</h3>
+                <canvas id="pieChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Recent User Inputs Table -->
+        {% if records %}
+        <div class="recent-inputs-section">
+            <h3>Recent User Inputs</h3>
+            <div class="table-responsive">
+                <table class="recent-inputs-table">
+                    <thead>
+                        <tr>
+                            <th>Date & Time</th>
+                            <th>Anxiety Level</th>
+                            <th>Mental Health History</th>
+                            <th>Depression</th>
+                            <th>Headache</th>
+                            <th>Sleep Quality</th>
+                            <th>Breathing Problem</th>
+                            <th>Living Conditions</th>
+                            <th>Academic Performance</th>
+                            <th>Study Load</th>
+                            <th>Future Career Concerns</th>
+                            <th>Extracurricular Activities</th>
+                            <th>Stress Level</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for record in records[:5] %}
+                        <tr>
+                            <td>{{ record.timestamp.strftime('%Y-%m-%d %H:%M') }}</td>
+                            <td>{{ record.anxiety_level }}</td>
+                            <td>{{ record.mental_health_history }}</td>
+                            <td>{{ record.depression }}</td>
+                            <td>{{ record.headache }}</td>
+                            <td>{{ record.sleep_quality }}</td>
+                            <td>{{ record.breathing_problem }}</td>
+                            <td>{{ record.living_conditions }}</td>
+                            <td>{{ record.academic_performance }}</td>
+                            <td>{{ record.study_load }}</td>
+                            <td>{{ record.future_career_concerns }}</td>
+                            <td>{{ record.extracurricular_activities }}</td>
+                            {% if record.stress_level is not none %}
+                                {% if record.stress_level == 0 %}{% set stress_class = 'low' %}
+                                {% elif record.stress_level == 1 %}{% set stress_class = 'moderate' %}
+                                {% else %}{% set stress_class = 'high' %}{% endif %}
+                                <td><span class="badge badge-{{ stress_class }}">{{ record.stress_level }}</span></td>
+                            {% else %}
+                                <td><span class="badge badge-na">N/A</span></td>
+                            {% endif %}
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% else %}
+        <div class="alert alert-info">
+            <p>No assessments yet. <a href="{{ url_for('predict') }}">Create your first assessment</a> to see your dashboard data.</p>
+        </div>
+        {% endif %}
+    </div>
+
+{% endblock %}
+
+{% block extra_js %}
+    <script>
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('collapsed');
+            localStorage.setItem('sidebarCollapsed', sidebar.classList.contains('collapsed'));
+        }
+
+        // Load sidebar state on page load
+        window.addEventListener('DOMContentLoaded', function() {
+            const sidebar = document.getElementById('sidebar');
+            if (localStorage.getItem('sidebarCollapsed') === 'true') {
+                sidebar.classList.add('collapsed');
+            }
+        });
+
+        // Trend Chart
+        {% if records %}
+        fetch('{{ url_for("history_data") }}')
+            .then(response => response.json())
+            .then(data => {
+                const points = data.dates
+                    .map((date, i) => ({ x: date, y: data.stress_values[i] }))
+                    .filter(p => p.y !== null && p.y !== undefined);
+                const stressColor = (value) => {
+                    if (value === 0) return '#0b3d91'; // Low
+                    if (value === 1) return '#f59e0b'; // Medium
+                    return '#ef4444'; // High
+                };
+
+                const ctx = document.getElementById('trendChart').getContext('2d');
+                new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: points.map(p => p.x),
+                        datasets: [
+                            {
+                                label: 'Stress Level',
+                                data: points.map(p => p.y),
+                                borderColor: '#0b3d91',
+                                tension: 0.28,
+                                fill: false,
+                                borderWidth: 3,
+                                pointRadius: 3,
+                                pointHoverRadius: 5,
+                                segment: {
+                                    borderColor: (ctx) => {
+                                        const y0 = ctx.p0.parsed.y;
+                                        const y1 = ctx.p1.parsed.y;
+                                        if (y0 === 2 || y1 === 2) return '#ef4444';
+                                        if (y0 === 1 || y1 === 1) return '#f59e0b';
+                                        return '#0b3d91';
+                                    }
+                                },
+                                pointBackgroundColor: (context) => stressColor(context.raw),
+                                pointBorderColor: '#ffffff',
+                                pointBorderWidth: 1
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: true,
+                                position: 'bottom',
+                                labels: {
+                                    generateLabels: () => ([
+                                        { text: 'Low Stress', fillStyle: '#0b3d91', strokeStyle: '#0b3d91', lineWidth: 0, hidden: false, index: 0 },
+                                        { text: 'Medium Stress', fillStyle: '#f59e0b', strokeStyle: '#f59e0b', lineWidth: 0, hidden: false, index: 1 },
+                                        { text: 'High Stress', fillStyle: '#ef4444', strokeStyle: '#ef4444', lineWidth: 0, hidden: false, index: 2 }
+                                    ])
+                                },
+                                onClick: null
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    title: (items) => items[0] ? items[0].label : '',
+                                    label: (context) => {
+                                        const value = context.parsed.y;
+                                        const category = value === 0 ? 'Low' : (value === 1 ? 'Medium' : 'High');
+                                        return `Stress Level: ${value} (${category})`;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'Date Time'
+                                },
+                                ticks: {
+                                    maxTicksLimit: 8,
+                                    autoSkip: true
+                                }
+                            },
+                            y: {
+                                beginAtZero: true,
+                                max: 2,
+                                title: {
+                                    display: true,
+                                    text: 'Stress Level Number'
+                                },
+                                ticks: {
+                                    stepSize: 1,
+                                    precision: 0
+                                }
+                            }
+                        }
+                    }
+                });
+            })
+            .catch(error => console.error('Error loading trend chart data:', error));
+
+        // Pie Chart
+        const pieCtx = document.getElementById('pieChart').getContext('2d');
+        new Chart(pieCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Low Stress', 'Medium Stress', 'High Stress'],
+                datasets: [{
+                    data: [{{ stats.low_stress_count }}, {{ stats.medium_stress_count }}, {{ stats.high_stress_count }}],
+                    backgroundColor: [
+                        '#0b3d91',
+                        '#f59e0b',
+                        '#ef4444'
+                    ],
+                    borderColor: [
+                        '#08306b',
+                        '#d97706',
+                        '#dc2626'
+                    ],
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
+        {% endif %}
+    </script>
+{% endblock %}

@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block title %}Model Settings{% endblock %}
+
+{% block content %}
+    <div class="container">
+        <h1 align="center">Model Settings</h1>
+        <p align="center" class="subtitle">Choose the default model for result display</p>
+
+        <form method="post" class="assessment-form">
+            <div class="form-section">
+                <div class="form-group">
+                    <label for="selected_model" class="form-label">Default Model</label>
+                    <select id="selected_model" name="selected_model" class="form-control" required>
+                        <option value="tree" {% if current_model == 'tree' %}selected{% endif %}>Decision Tree</option>
+                        <option value="forest" {% if current_model == 'forest' %}selected{% endif %}>Random Forest</option>
+                        <option value="svm" {% if current_model == 'svm' %}selected{% endif %}>Support Vector Machine</option>
+                        <option value="gbm" {% if current_model == 'gbm' %}selected{% endif %}>Gradient Boosting</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="center-button">
+                <button type="submit" class="btn btn-primary">Save</button>
+                <a href="{{ url_for('predict') }}" class="btn btn-secondary">Back to Prediction</a>
+            </div>
+        </form>
+    </div>
+
+{% endblock %}

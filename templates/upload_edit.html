@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Record - Stress Level Predictor{% endblock %}
+
+{% block content %}
+    <div class="container">
+        <h1 align="center">Edit Record</h1>
+        <p align="center" class="subtitle">Update your stress record</p>
+
+        {% if message %}
+            <div class="alert alert-{{ message_type or 'info' }}">{{ message }}</div>
+        {% endif %}
+
+        <div class="form-section">
+            <form method="POST" action="{{ url_for('uploads_edit', record_id=record.id) }}">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label">Anxiety Level</label>
+                        <input class="form-control" type="number" step="0.01" name="anxiety_level" value="{{ record.anxiety_level }}" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Mental Health History</label>
+                        <input class="form-control" type="number" step="0.01" name="mental_health_history" value="{{ record.mental_health_history }}" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Depression</label>
+                        <input class="form-control" type="number" step="0.01" name="depression" value="{{ record.depression }}" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Headache</label>
+                        <input class="form-control" type="number" step="0.01" name="headache" value="{{ record.headache }}" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Sleep Quality</label>
+                        <input class="form-control" type="number" step="0.01" name="sleep_quality" value="{{ record.sleep_quality }}" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Breathing Problem</label>
+                        <input class="form-control" type="number" step="0.01" name="breathing_problem" value="{{ record.breathing_problem }}" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Living Conditions</label>
+                        <input class="form-control" type="number" step="0.01" name="living_conditions" value="{{ record.living_conditions }}" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Academic Performance</label>
+                        <input class="form-control" type="number" step="0.01" name="academic_performance" value="{{ record.academic_performance }}" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Study Load</label>
+                        <input class="form-control" type="number" step="0.01" name="study_load" value="{{ record.study_load }}" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Future Career Concerns</label>
+                        <input class="form-control" type="number" step="0.01" name="future_career_concerns" value="{{ record.future_career_concerns }}" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Extracurricular Activities</label>
+                        <input class="form-control" type="number" step="0.01" name="extracurricular_activities" value="{{ record.extracurricular_activities }}" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Stress Level (0/1/2)</label>
+                        <input class="form-control" type="number" step="1" min="0" max="2" name="stress_level" value="{{ record.stress_level if record.stress_level is not none }}">
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary">Save Changes</button>
+                <a class="btn btn-secondary" href="{{ url_for('uploads') }}">Cancel</a>
+            </form>
+        </div>
+    </div>
+{% endblock %}
+

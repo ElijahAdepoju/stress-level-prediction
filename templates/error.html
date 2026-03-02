@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Error - Stress Level Predictor</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <nav class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h2>SLP</h2>
+            <button class="toggle-btn" id="toggleBtn" onclick="toggleSidebar()">
+                <i class="fas fa-bars"></i>
+            </button>
+        </div>
+        <ul class="sidebar-nav">
+            <li><a href="/" title="Home"><i class="fas fa-home"></i><span>Home</span></a></li>
+            <li><a href="{{ url_for('login_page') }}" title="Login"><i class="fas fa-sign-in-alt"></i><span>Login</span></a></li>
+        </ul>
+    </nav>
+    <div class="main-content">
+        <div class="container error-container">
+        <h1 align="center">Error</h1>
+        <div class="alert alert-danger">
+            <p>{{ error_message }}</p>
+        </div>
+        <div class="center-button">
+            <a href="/" class="btn btn-primary">Go to Home</a>
+            {% if username %}
+            <a href="{{ url_for('predict') }}" class="btn btn-secondary">Try Again</a>
+            {% endif %}
+        </div>
+    </div>
+    
+    <script>
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('collapsed');
+            localStorage.setItem('sidebarCollapsed', sidebar.classList.contains('collapsed'));
+        }
+
+        window.addEventListener('DOMContentLoaded', function() {
+            const sidebar = document.getElementById('sidebar');
+            if (localStorage.getItem('sidebarCollapsed') === 'true') {
+                sidebar.classList.add('collapsed');
+            }
+        });
+    </script>
+</body>
+</html>

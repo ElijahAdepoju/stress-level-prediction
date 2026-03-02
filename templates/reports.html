@@ -1,0 +1,331 @@
+{% extends "base.html" %}
+
+{% block title %}Reports - Stress Level Predictor{% endblock %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+{% endblock %}
+
+{% block content %}
+    <div class="container reports-dashboard">
+        <div class="reports-header">
+            <div>
+                <h1>Reports</h1>
+                <p class="subtitle">Enterprise Health AI Dashboard - {{ selected_model }}</p>
+            </div>
+        </div>
+
+        <div class="kpi-grid reports-kpis">
+            <div class="kpi-card">
+                <div class="kpi-label">Accuracy</div>
+                <div class="kpi-value">{{ (metrics.accuracy * 100) | round(1) }}%</div>
+                <div class="kpi-unit">model score</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">Precision</div>
+                <div class="kpi-value">{{ (metrics.precision * 100) | round(1) }}%</div>
+                <div class="kpi-unit">weighted avg</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">Recall</div>
+                <div class="kpi-value">{{ (metrics.recall * 100) | round(1) }}%</div>
+                <div class="kpi-unit">weighted avg</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">F1 Score</div>
+                <div class="kpi-value">{{ (metrics.f1 * 100) | round(1) }}%</div>
+                <div class="kpi-unit">weighted avg</div>
+            </div>
+        </div>
+
+        <div class="reports-grid">
+            <div class="report-card">
+                <div class="card-header">
+                    <h3>Confusion Matrix</h3>
+                    <span class="card-subtitle">Rows: Actual Class, Columns: Predicted Class</span>
+                </div>
+                <div class="matrix-legend">
+                    <span>Actual (Y Axis)</span>
+                    <span>Predicted (X Axis)</span>
+                </div>
+                <div class="matrix-wrapper">
+                    <canvas id="confusionChart"></canvas>
+                </div>
+            </div>
+
+            <div class="report-card">
+                <div class="card-header">
+                    <h3>Model Performance</h3>
+                    <span class="card-subtitle">Accuracy, Precision, Recall, F1</span>
+                </div>
+                <canvas id="performanceChart"></canvas>
+            </div>
+
+            <div class="report-card">
+                <div class="card-header">
+                    <h3>Feature Importance</h3>
+                    <span class="card-subtitle">Top Drivers</span>
+                </div>
+                <canvas id="featureChart"></canvas>
+            </div>
+
+            <div class="report-card">
+                <div class="card-header">
+                    <h3>Stress Trend</h3>
+                    <span class="card-subtitle">Stress Level Number vs Date Time</span>
+                </div>
+                <canvas id="trendChart"></canvas>
+            </div>
+
+            <div class="report-card gauge-card">
+                <div class="card-header">
+                    <h3>Real-Time Stress Gauge</h3>
+                    <span class="card-subtitle">Live State</span>
+                </div>
+                <div class="gauge">
+                    <div class="gauge-arc">
+                        <div class="gauge-needle" id="gaugeNeedle"></div>
+                    </div>
+                    <div class="gauge-labels">
+                        <span>Low</span>
+                        <span>Medium</span>
+                        <span>High</span>
+                    </div>
+                    <div class="gauge-value" id="gaugeValue"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-chart-matrix@1.3.0/dist/chartjs-chart-matrix.min.js"></script>
+    <script>
+        const confusion = {{ metrics.confusion | tojson }};
+        const classLabels = ['Low (0)', 'Medium (1)', 'High (2)'];
+
+        const maxConfusionValue = Math.max(...confusion.flat(), 1);
+        const matrixPoints = [];
+        for (let actual = 0; actual < 3; actual++) {
+            for (let predicted = 0; predicted < 3; predicted++) {
+                matrixPoints.push({ x: predicted, y: actual, v: confusion[actual][predicted] });
+            }
+        }
+
+        const matrixValueLabels = {
+            id: 'matrixValueLabels',
+            afterDatasetsDraw(chart) {
+                const { ctx } = chart;
+                const meta = chart.getDatasetMeta(0);
+                meta.data.forEach((cell, i) => {
+                    const value = matrixPoints[i].v;
+                    const darkBg = value >= (maxConfusionValue * 0.55);
+                    ctx.save();
+                    ctx.fillStyle = darkBg ? '#ffffff' : '#0b1f3a';
+                    ctx.font = '600 12px Space Grotesk, sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(String(value), cell.x, cell.y);
+                    ctx.restore();
+                });
+            }
+        };
+
+        new Chart(document.getElementById('confusionChart'), {
+            type: 'matrix',
+            data: {
+                datasets: [{
+                    label: 'Confusion Matrix',
+                    data: matrixPoints,
+                    backgroundColor: (ctx) => {
+                        const value = ctx.raw.v;
+                        const alpha = 0.15 + (value / maxConfusionValue) * 0.75;
+                        return `rgba(11, 61, 145, ${alpha.toFixed(3)})`;
+                    },
+                    borderColor: (ctx) => (ctx.raw.x === ctx.raw.y ? '#059669' : '#0b3d91'),
+                    borderWidth: (ctx) => (ctx.raw.x === ctx.raw.y ? 2 : 1),
+                    width: ({ chart }) => (chart.chartArea ? (chart.chartArea.width / 3) - 6 : 0),
+                    height: ({ chart }) => (chart.chartArea ? (chart.chartArea.height / 3) - 6 : 0)
+                }]
+            },
+            options: {
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            title: () => '',
+                            label: (ctx) => {
+                                const actual = classLabels[ctx.raw.y];
+                                const predicted = classLabels[ctx.raw.x];
+                                return `Actual: ${actual} | Predicted: ${predicted} | Count: ${ctx.raw.v}`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        type: 'linear',
+                        min: -0.5,
+                        max: 2.5,
+                        position: 'top',
+                        ticks: {
+                            stepSize: 1,
+                            callback: (value) => classLabels[value] ?? ''
+                        },
+                        title: {
+                            display: true,
+                            text: 'Predicted Class'
+                        },
+                        grid: { display: false }
+                    },
+                    y: {
+                        type: 'linear',
+                        min: -0.5,
+                        max: 2.5,
+                        reverse: true,
+                        ticks: {
+                            stepSize: 1,
+                            callback: (value) => classLabels[value] ?? ''
+                        },
+                        title: {
+                            display: true,
+                            text: 'Actual Class'
+                        },
+                        grid: { display: false }
+                    }
+                }
+            },
+            plugins: [matrixValueLabels]
+        });
+
+        const valueLabels = {
+            id: 'valueLabels',
+            afterDatasetsDraw(chart) {
+                const { ctx } = chart;
+                chart.data.datasets.forEach((dataset, i) => {
+                    const meta = chart.getDatasetMeta(i);
+                    meta.data.forEach((bar, index) => {
+                        const value = dataset.data[index];
+                        ctx.save();
+                        ctx.fillStyle = '#0b1f3a';
+                        ctx.font = '12px Space Grotesk, sans-serif';
+                        ctx.textAlign = 'center';
+                        ctx.fillText(`${value}%`, bar.x, bar.y - 8);
+                        ctx.restore();
+                    });
+                });
+            }
+        };
+
+        new Chart(document.getElementById('performanceChart'), {
+            type: 'bar',
+            data: {
+                labels: ['Accuracy', 'Precision', 'Recall', 'F1 Score'],
+                datasets: [{
+                    data: [
+                        {{ (metrics.accuracy * 100) | round(1) }},
+                        {{ (metrics.precision * 100) | round(1) }},
+                        {{ (metrics.recall * 100) | round(1) }},
+                        {{ (metrics.f1 * 100) | round(1) }}
+                    ],
+                    backgroundColor: ['#0b3d91', '#1d4ed8', '#60a5fa', '#93c5fd'],
+                    borderRadius: 10
+                }]
+            },
+            options: {
+                plugins: {
+                    valueLabels: {},
+                    legend: { display: false },
+                    tooltip: { callbacks: { label: (ctx) => `${ctx.raw}%` } }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100
+                    }
+                }
+            },
+            plugins: [valueLabels]
+        });
+
+        const featureLabels = {{ feature_pairs | map(attribute=0) | list | tojson }};
+        const featureValues = {{ feature_pairs | map(attribute=1) | list | tojson }};
+
+        new Chart(document.getElementById('featureChart'), {
+            type: 'bar',
+            data: {
+                labels: featureLabels,
+                datasets: [{
+                    data: featureValues,
+                    backgroundColor: '#1e3a5f',
+                    borderRadius: 10
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                plugins: { legend: { display: false } }
+            }
+        });
+
+        fetch('{{ url_for("history_data") }}')
+            .then(response => response.json())
+            .then(data => {
+                const trendPoints = data.dates
+                    .map((d, i) => ({ x: d, y: data.stress_values[i] }))
+                    .filter(p => p.y !== null && p.y !== undefined);
+
+                new Chart(document.getElementById('trendChart'), {
+                    type: 'line',
+                    data: {
+                        labels: trendPoints.map(p => p.x),
+                        datasets: [{
+                            label: 'Stress Level',
+                            data: trendPoints.map(p => p.y),
+                            borderColor: '#0b3d91',
+                            backgroundColor: 'rgba(11, 61, 145, 0.08)',
+                            tension: 0.4,
+                            fill: true,
+                            pointRadius: 3
+                        }]
+                    },
+                    options: {
+                        scales: {
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'Date Time'
+                                },
+                                ticks: {
+                                    maxTicksLimit: 8,
+                                    autoSkip: true
+                                }
+                            },
+                            y: {
+                                beginAtZero: true,
+                                max: 2,
+                                ticks: { stepSize: 1 },
+                                title: {
+                                    display: true,
+                                    text: 'Stress Level Number'
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: { display: false }
+                        }
+                    }
+                });
+            })
+            .catch(() => {});
+
+        const currentStress = {{ current_stress }};
+        const gaugeNeedle = document.getElementById('gaugeNeedle');
+        const gaugeValue = document.getElementById('gaugeValue');
+        const angle = -90 + (currentStress / 2) * 180;
+        gaugeNeedle.style.transform = `rotate(${angle}deg)`;
+        const labelMap = {0: 'Low', 1: 'Medium', 2: 'High'};
+        gaugeValue.textContent = `Current: ${labelMap[currentStress] || 'Low'}`;
+    </script>
+{% endblock %}
